@@ -49,5 +49,7 @@ void playSong(SongNode *s);
 void stopSong();
 void showSongInfo(const Song &s);
 //helper
-SongNode* findSimilar(Library &L, SongNode *current); // similar by artist, then genre
+SongNode* findSimilar(Library &L, SongNode *current); 
+void adminMenu(Library &lib);
+void userMenu(Library &lib, Playlist &pl);
 #endif // TUBESSTD_H_INCLUDED
