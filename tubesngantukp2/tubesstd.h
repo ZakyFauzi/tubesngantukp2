@@ -23,7 +23,7 @@ struct ListLagu {
     adrLagu last;
 };
 struct ElmPlay {
-    adrLagu song;     // pointer ke library (tidak duplikasi data)
+    adrLagu song;
     adrPlay next;
 };
 struct Playlist {
