@@ -8,9 +8,9 @@ typedef struct ElmStack *adrS;
 typedef struct ElmQueue *adrQ;
 typedef struct Lagu {
     int id;
-    char judul[50];
-    char artis[50];
-    char genre[30];
+    string judul;
+    string artis;
+    string genre;
     int tahun;
 };
 struct ElmLagu {
