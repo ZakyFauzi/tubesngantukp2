@@ -1,39 +1,97 @@
 #include <iostream>
 #include "tubesstd.h"
 using namespace std;
-int main(){
-    Library lib;
-    initLibrary(lib);
+int main() {
+    ListLagu L;
+    Playlist P;
+    Stack S;
+    Queue Q;
 
-    //sample
-    Song s1; s1.id=1; strcpy(s1.title,"Satu Hari"); strcpy(s1.artist,"ArtisA");
-    strcpy(s1.genre,"Pop"); strcpy(s1.album,"Album1"); s1.year=2020;
-    insertSongLast(lib,s1);
-    Song s2; s2.id=2; strcpy(s2.title,"Dua Malam"); strcpy(s2.artist,"ArtisB");
-    strcpy(s2.genre,"Rock"); strcpy(s2.album,"Album2"); s2.year=2019;
-    insertSongLast(lib,s2);
-    Song s3; s3.id=3; strcpy(s3.title,"Satu Lagi"); strcpy(s3.artist,"ArtisA");
-    strcpy(s3.genre,"Pop"); strcpy(s3.album,"Album3"); s3.year=2021;
-    insertSongLast(lib,s3);
+    createListLagu(L);
+    createPlaylist(P);
+    createStack(S);
+    createQueue(Q);
 
-    Playlist userPl;
-    initPlaylist(userPl, "MyPlaylist");
+    int role;
+    cout << "1. Admin\n2. User\nPilih role: ";
+    cin >> role;
+    if (role == 1) {
+        int menu = 1;
+        while (menu != 0) {
+            cout << "\n=== MENU ADMIN ===\n";
+            cout << "1. Tambah lagu\n";
+            cout << "2. Lihat library\n";
+            cout << "3. Update lagu\n";
+            cout << "4. Hapus lagu\n";
+            cout << "0. Keluar\n";
+            cin >> menu;
+            if (menu == 1) {
+                Lagu x;
+                cout << "ID: "; cin >> x.id;
+                cout << "Judul: "; cin >> x.judul;
+                cout << "Artis: "; cin >> x.artis;
+                cout << "Genre: "; cin >> x.genre;
+                cout << "Tahun: "; cin >> x.tahun;
+                insertLagu(L, x);
+            }
+            else if (menu == 2) showLibrary(L);
+            else if (menu == 3) {
+                int id; cout << "ID lagu: "; cin >> id;
+                adrLagu p = findLaguById(L, id);
+                if (p != NULL) {
+                    Lagu baru;
+                    cout << "Judul baru: "; cin >> baru.judul;
+                    cout << "Artis baru: "; cin >> baru.artis;
+                    cout << "Genre baru: "; cin >> baru.genre;
+                    cout << "Tahun baru: "; cin >> baru.tahun;
+                    baru.id = id;
+                    updateLagu(p, baru);
+                }
+            }
+            else if (menu == 4) {
+                int id; cout << "ID hapus: "; cin >> id;
+                deleteLagu(L, id);
+            }
+        }
+    }
+    else if (role == 2) {
+        int menu = 1;
+        adrLagu current = NULL;
+        while (menu != 0) {
+            cout << "\n=== MENU USER ===\n";
+            cout << "1. Lihat library\n";
+            cout << "2. Cari lagu\n";
+            cout << "3. Putar lagu\n";
+            cout << "4. Next (mirip)\n";
+            cout << "5. Tambah ke playlist\n";
+            cout << "6. Lihat playlist\n";
+            cout << "0. Keluar\n";
+            cin >> menu;
 
-    int choice;
-    do{
-        cout<<"\n=== Aplikasi Pemutar Musik ===\n";
-        cout<<"1. Masuk sebagai Admin\n2. Masuk sebagai User\n0. Keluar\nPilih: ";
-        cin>>choice; cin.ignore();
-        if(choice==1) adminMenu(lib);
-        else if(choice==2) userMenu(lib,userPl);
-    } while(choice!=0);
-
-    // cleanup
-    clearPlaylist(userPl);
-    // delete library nodes
-    SongNode *p = lib.first;
-    while(p){ SongNode *q = p->next; delete p; p = q; }
-
-    cout<<"Selesai.\n";
+            if (menu == 1) showLibrary(L);
+            else if (menu == 2) {
+                int id; cout << "Masukkan ID: "; cin >> id;
+                adrLagu p = findLaguById(L, id);
+                if (p != NULL) cout << "Lagu ditemukan!\n";
+                current = p;
+            }
+            else if (menu == 3) {
+                if (current != NULL) playSong(current);
+                else cout << "Belum memilih lagu!\n";
+            }
+            else if (menu == 4) {
+                if (current != NULL) {
+                    current = nextSimilar(L, current);
+                    playSong(current);
+                }
+            }
+            else if (menu == 5) {
+                int id; cout << "ID lagu: "; cin >> id;
+                adrLagu p = findLaguById(L, id);
+                if (p != NULL) addToPlaylist(P, p);
+            }
+            else if (menu == 6) showPlaylist(P);
+        }
+    }
     return 0;
 }
