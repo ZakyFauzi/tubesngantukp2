@@ -1,8 +1,6 @@
 #include <iostream>
 #include "tubesstd.h"
 using namespace std;
-
-/* Simple UI untuk Admin & User */
 void adminMenu(Library &lib);
 void userMenu(Library &lib, Playlist &pl);
 
@@ -10,7 +8,7 @@ int main(){
     Library lib;
     initLibrary(lib);
 
-    // seed sample songs (optional)
+    //sample
     Song s1; s1.id=1; strcpy(s1.title,"Satu Hari"); strcpy(s1.artist,"ArtisA");
     strcpy(s1.genre,"Pop"); strcpy(s1.album,"Album1"); s1.year=2020;
     insertSongLast(lib,s1);
@@ -43,7 +41,7 @@ int main(){
     return 0;
 }
 
-/* ---------- Admin menu ---------- */
+// admin menu
 void adminMenu(Library &lib){
     int opt;
     do{
@@ -81,7 +79,7 @@ void adminMenu(Library &lib){
     } while(opt!=0);
 }
 
-/* ---------- User menu ---------- */
+//user menu
 void userMenu(Library &lib, Playlist &pl){
     int opt;
     SongNode *currentPlaying = nullptr;
@@ -108,7 +106,7 @@ void userMenu(Library &lib, Playlist &pl){
             if(!n) { cout<<"Lagu tidak ditemukan.\n"; continue; }
             playSong(n);
             currentPlaying = n;
-            // if song is in playlist, set context
+            //set context jika lagu di playlist
             inPlaylistContext = false;
             PlaylistNode *pn = pl.head;
             while(pn){
@@ -136,13 +134,13 @@ void userMenu(Library &lib, Playlist &pl){
             }
         } else if(opt==5){ // Prev
             if(inPlaylistContext && currentPlaylistNode){
-                // need to find previous in playlist
+                //cari prev
                 PlaylistNode *pn = pl.head; PlaylistNode *prev = nullptr;
                 while(pn && pn != currentPlaylistNode){ prev = pn; pn = pn->next; }
                 if(prev){ currentPlaylistNode = prev; playSong(currentPlaylistNode->songPtr); currentPlaying = currentPlaylistNode->songPtr; }
                 else cout<<"Ini lagu pertama di playlist.\n";
             } else {
-                // in library context: use prev pointer
+                //prev
                 if(currentPlaying){
                     if(currentPlaying->prev){ playSong(currentPlaying->prev); currentPlaying = currentPlaying->prev; inPlaylistContext=false; currentPlaylistNode=nullptr; }
                     else cout<<"Tidak ada lagu sebelumnya.\n";
