@@ -1,53 +1,74 @@
 #ifndef TUBESSTD_H_INCLUDED
 #define TUBESSTD_H_INCLUDED
-
 #include <iostream>
 using namespace std;
-struct Song {
+typedef struct ElmLagu *adrLagu;
+typedef struct ElmPlay *adrPlay;
+typedef struct ElmStack *adrS;
+typedef struct ElmQueue *adrQ;
+typedef struct Lagu {
     int id;
-    char title[51];
-    char artist[51];
-    char genre[31];
-    char album[51];
-    int year;
+    char judul[50];
+    char artis[50];
+    char genre[30];
+    int tahun;
 };
-struct SongNode {
-    Song info;
-    SongNode *prev;
-    SongNode *next;
+struct ElmLagu {
+    Lagu info;
+    adrLagu next;
+    adrLagu prev;
 };
-struct PlaylistNode {
-    SongNode *songPtr;
-    PlaylistNode *next;
+struct ListLagu {
+    adrLagu first;
+    adrLagu last;
 };
-struct Library {
-    SongNode *first;
-    SongNode *last;
+struct ElmPlay {
+    adrLagu song;     // pointer ke library (tidak duplikasi data)
+    adrPlay next;
 };
 struct Playlist {
-    char name[31];
-    PlaylistNode *head;
+    adrPlay first;
+    adrPlay last;
 };
-//library
-void initLibrary(Library &L);
-SongNode* createSongNode(const Song &s);
-bool insertSongLast(Library &L, Song s);
-SongNode* findSongById(Library &L, int id);
-SongNode* findSongByTitle(Library &L, const char title[]);
-bool updateSong(Library &L, int id, const Song &newData);
-bool deleteSong(Library &L, int id); // returns true if deleted
-void viewAllSongs(Library &L);
-int nextId(Library &L);
-//playlist
-void initPlaylist(Playlist &P, const char name[]);
-bool addToPlaylist(Playlist &P, SongNode *songPtr);
-bool removeFromPlaylistById(Playlist &P, int songId);
-void viewPlaylist(Playlist &P);
-void clearPlaylist(Playlist &P);
-//player
-void playSong(SongNode *s);
-void stopSong();
-void showSongInfo(const Song &s);
+struct ElmStack {
+    adrLagu song;
+    adrS next;
+};
+struct Stack {
+    adrS top;
+};
+struct ElmQueue {
+    adrLagu song;
+    adrQ next;
+};
+struct Queue {
+    adrQ head;
+    adrQ tail;
+};
+// Library
+void createListLagu(ListLagu &L);
+adrLagu allocateLagu(Lagu x);
+void insertLagu(ListLagu &L, Lagu x);
+void showLibrary(ListLagu L);
+adrLagu findLaguById(ListLagu L, int id);
+void updateLagu(adrLagu p, Lagu baru);
+void deleteLagu(ListLagu &L, int id);
+// Playlist
+void createPlaylist(Playlist &P);
+void addToPlaylist(Playlist &P, adrLagu song);
+void removeFromPlaylist(Playlist &P, int id);
+void showPlaylist(Playlist P);
+// Stack
+void createStack(Stack &S);
+void push(Stack &S, adrLagu x);
+adrLagu pop(Stack &S);
+// Queue
+void createQueue(Queue &Q);
+void enqueue(Queue &Q, adrLagu x);
+adrLagu dequeue(Queue &Q);
+// Player
+void playSong(adrLagu song);
+adrLagu nextSimilar(ListLagu L, adrLagu current);
 //helper
 SongNode* findSimilar(Library &L, SongNode *current); 
 void adminMenu(Library &lib);
