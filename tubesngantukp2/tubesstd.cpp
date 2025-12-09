@@ -32,17 +32,23 @@ void showLibrary(ListLagu L) {
 adrLagu findLaguById(ListLagu L, int id) {
     adrLagu p = L.first;
     while (p != nullptr) {
-        if (p->info.id == id) return p;
+        if (p->info.id == id){
+            return p;
+        }    
         p = p->next;
     }
     return nullptr;
 }
 void updateLagu(adrLagu p, Lagu baru) {
-    if (p != nullptr) p->info = baru;
+    if (p != nullptr){
+         p->info = baru;
+    }
 }
 void deleteLagu(ListLagu &L, int id) {
     adrLagu p = findLaguById(L, id);
-    if (p == nullptr) return;
+    if (p == nullptr){
+        return;
+    }
     if (p == L.first && p == L.last) {
         L.first = L.last = nullptr;
     } else if (p == L.first) {
@@ -106,7 +112,9 @@ void push(Stack &S, adrLagu x) {
     S.top = p;
 }
 adrLagu pop(Stack &S) {
-    if (S.top == nullptr) return nullptr;
+    if (S.top == nullptr){
+        return nullptr;
+    }
     adrS p = S.top;
     S.top = p->next;
     adrLagu x = p->song;
@@ -120,39 +128,48 @@ void enqueue(Queue &Q, adrLagu x) {
     adrQ p = new ElmQueue;
     p->song = x;
     p->next = nullptr;
-    if (Q.head == nullptr) Q.head = Q.tail = p;
-    else {
+    if (Q.head == nullptr){
+        Q.head = Q.tail = p;
+    }else {
         Q.tail->next = p;
         Q.tail = p;
     }
 }
 adrLagu dequeue(Queue &Q) {
-    if (Q.head == nullptr) return nullptr;
+    if (Q.head == nullptr){
+        return nullptr;
+    }
     adrQ p = Q.head;
     Q.head = p->next;
-    if (Q.head == nullptr) Q.tail = nullptr;
+    if (Q.head == nullptr){
+        Q.tail = nullptr; 
+    }
     adrLagu x = p->song;
     delete p;
     return x;
 }
 void playSong(adrLagu song) {
-    if (song == nullptr) return;
-    cout << "Memutar lagu: " << song->info.judul 
+    if (song == nullptr){
+        cout << "lagu masih kosong";
+    }else{
+        cout << "Memutar lagu: " << song->info.judul 
          << " - " << song->info.artis << endl;
+    }
 }
 adrLagu nextSimilar(ListLagu L, adrLagu current) {
     adrLagu p = L.first;
     while (p != nullptr) {
-        if (p != current && strcmp(p->info.artis, current->info.artis) == 0)
+        if (p != current && strcmp(p->info.artis, current->info.artis) == 0){
             return p;
+        }    
         p = p->next;
     }
     p = L.first;
     while (p != nullptr) {
-        if (p != current && strcmp(p->info.genre, current->info.genre) == 0)
+        if (p != current && strcmp(p->info.genre, current->info.genre) == 0){
             return p;
+        }  
         p = p->next;
     }
     return L.first; // fallback
 }
-
