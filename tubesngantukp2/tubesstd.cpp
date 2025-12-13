@@ -49,6 +49,7 @@ void deleteLagu(ListLagu &L, int id) {
     if (p == nullptr){
         return;
     }
+    // CRITICAL: Hapus dari Library (DLL)
     if (p == L.first && p == L.last) {
         L.first = L.last = nullptr;
     } else if (p == L.first) {
@@ -148,28 +149,71 @@ adrLagu dequeue(Queue &Q) {
     delete p;
     return x;
 }
-void playSong(adrLagu song) {
-    if (song == nullptr){
-        cout << "lagu masih kosong";
-    }else{
-        cout << "Memutar lagu: " << song->info.judul 
-         << " - " << song->info.artis << endl;
+// CRITICAL LOGIC: Hapus semua referensi ke lagu dari playlist untuk mencegah dangling pointer
+void removeFromAllPlaylists(Playlist &P, int id) {
+    adrPlay curr = P.first, prev = nullptr;
+    while (curr != nullptr) {
+        if (curr->song->info.id == id) {
+            adrPlay toDelete = curr;
+            if (curr == P.first) {
+                P.first = curr->next;
+                if (curr == P.last) P.last = nullptr;
+                curr = P.first;
+            } else {
+                prev->next = curr->next;
+                if (curr == P.last) P.last = prev;
+                curr = curr->next;
+            }
+            delete toDelete;
+        } else {
+            prev = curr;
+            curr = curr->next;
+        }
     }
 }
+
+void playSong(adrLagu song, Stack &S) {
+    if (song == nullptr){
+        cout << "Lagu masih kosong!" << endl;
+    }else{
+        cout << "\n♪♫ Sedang memutar: " << song->info.judul 
+         << " - " << song->info.artis << " ♫♪\n" << endl;
+        // Push ke history stack
+        push(S, song);
+    }
+}
+// LOGIC NEXT SONG: Cari lagu mirip di Library
+// Prioritas: 1. Artis sama, 2. Genre sama, 3. Fallback ke lagu pertama
 adrLagu nextSimilar(ListLagu L, adrLagu current) {
+    if (current == nullptr) return L.first;
+    
+    // Prioritas 1: Cari lagu dengan artis yang sama
     adrLagu p = L.first;
     while (p != nullptr) {
-        if (p != current && strcmp(p->info.artis, current->info.artis) == 0){
+        if (p != current && p->info.artis == current->info.artis){
             return p;
         }    
         p = p->next;
     }
+    
+    // Prioritas 2: Cari lagu dengan genre yang sama
     p = L.first;
     while (p != nullptr) {
-        if (p != current && strcmp(p->info.genre, current->info.genre) == 0){
+        if (p != current && p->info.genre == current->info.genre){
             return p;
         }  
         p = p->next;
     }
-    return L.first; // fallback
+    
+    // Prioritas 3: Fallback - cari lagu berikutnya di library
+    if (current->next != nullptr) {
+        return current->next;
+    }
+    
+    return L.first; // fallback ke awal
+}
+
+// Fungsi untuk kembali ke lagu sebelumnya dari history (Stack)
+adrLagu previousSong(Stack &S) {
+    return pop(S);
 }

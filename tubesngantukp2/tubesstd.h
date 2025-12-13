@@ -67,10 +67,9 @@ void createQueue(Queue &Q);
 void enqueue(Queue &Q, adrLagu x);
 adrLagu dequeue(Queue &Q);
 // Player
-void playSong(adrLagu song);
+void playSong(adrLagu song, Stack &S);
 adrLagu nextSimilar(ListLagu L, adrLagu current);
-//helper
-SongNode* findSimilar(Library &L, SongNode *current); 
-void adminMenu(Library &lib);
-void userMenu(Library &lib, Playlist &pl);
+adrLagu previousSong(Stack &S);
+// Helper
+void removeFromAllPlaylists(Playlist &P, int id);
 #endif // TUBESSTD_H_INCLUDED
