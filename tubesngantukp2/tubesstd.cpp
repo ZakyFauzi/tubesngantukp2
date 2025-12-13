@@ -46,25 +46,25 @@ void updateLagu(adrLagu p, Lagu baru) {
 }
 void deleteLagu(ListLagu &L, int id) {
     adrLagu p = findLaguById(L, id);
-    if (p == nullptr){
-        return;
+    adrLagu temp;
+    if (p != nullptr) {
+        temp = p;
+        if (temp == L.first && temp == L.last) {
+            L.first = L.last = nullptr;
+        } else if (temp == L.first) {
+            L.first = temp->next;
+            L.first->prev = nullptr;
+        } else if (temp == L.last) {
+            L.last = temp->prev;
+            L.last->next = nullptr;
+        } else {
+            temp->prev->next = temp->next;
+            temp->next->prev = temp->prev;
+        }
+        temp->next = nullptr;
+        temp->prev = nullptr;
     }
-    // CRITICAL: Hapus dari Library (DLL)
-    if (p == L.first && p == L.last) {
-        L.first = L.last = nullptr;
-    } else if (p == L.first) {
-        L.first = p->next;
-        L.first->prev = nullptr;
-    } else if (p == L.last) {
-        L.last = p->prev;
-        L.last->next = nullptr;
-    } else {
-        p->prev->next = p->next;
-        p->next->prev = p->prev;
-    }
-    delete p;
 }
-
 void createPlaylist(Playlist &P) {
     P.first = P.last = nullptr;
 }
@@ -80,21 +80,31 @@ void addToPlaylist(Playlist &P, adrLagu song) {
     }
 }
 void removeFromPlaylist(Playlist &P, int id) {
-    adrPlay p = P.first, prev = nullptr;
-    while (p != nullptr) {
-        if (p->song->info.id == id) {
-            if (p == P.first) {
-                P.first = p->next;
-                if (p == P.last) P.last = nullptr;
+    adrPlay curr = P.first;
+    adrPlay prev = nullptr;
+    adrPlay temp = nullptr;
+    bool found = false;
+    while (curr != nullptr && !found) {
+        if (curr->song->info.id == id) {
+            temp = curr;
+            found = true;
+            if (temp == P.first) {
+                P.first = temp->next;
+                if (temp == P.last) {
+                    P.last = nullptr;
+                }
             } else {
-                prev->next = p->next;
-                if (p == P.last) P.last = prev;
+                prev->next = temp->next;
+                if (temp == P.last) {
+                    P.last = prev;
+                }
             }
-            delete p;
-            return;
+            temp->next = nullptr;
+            temp->song = nullptr;
+        } else {
+            prev = curr;
+            curr = curr->next;
         }
-        prev = p;
-        p = p->next;
     }
 }
 void showPlaylist(Playlist P) {
@@ -105,7 +115,9 @@ void showPlaylist(Playlist P) {
         p = p->next;
     }
 }
-void createStack(Stack &S) { S.top = nullptr; }
+void createStack(Stack &S) {
+    S.top = nullptr;
+}
 void push(Stack &S, adrLagu x) {
     adrS p = new ElmStack;
     p->song = x;
@@ -113,13 +125,15 @@ void push(Stack &S, adrLagu x) {
     S.top = p;
 }
 adrLagu pop(Stack &S) {
-    if (S.top == nullptr){
-        return nullptr;
+    adrS p;
+    adrLagu x = nullptr;
+    if (S.top != nullptr) {
+        p = S.top;
+        S.top = p->next;    
+        x = p->song;        
+        p->next = nullptr;  
+        p->song = nullptr; 
     }
-    adrS p = S.top;
-    S.top = p->next;
-    adrLagu x = p->song;
-    delete p;
     return x;
 }
 void createQueue(Queue &Q) {
@@ -137,57 +151,59 @@ void enqueue(Queue &Q, adrLagu x) {
     }
 }
 adrLagu dequeue(Queue &Q) {
-    if (Q.head == nullptr){
-        return nullptr;
+    adrQ p;
+    adrLagu x = nullptr;
+    if (Q.head != nullptr) {
+        p = Q.head;          
+        Q.head = p->next;    
+        if (Q.head == nullptr) {
+            Q.tail = nullptr;
+        }
+        x = p->song;        
+        p->next = nullptr;   
+        p->song = nullptr;
     }
-    adrQ p = Q.head;
-    Q.head = p->next;
-    if (Q.head == nullptr){
-        Q.tail = nullptr; 
-    }
-    adrLagu x = p->song;
-    delete p;
     return x;
 }
-// CRITICAL LOGIC: Hapus semua referensi ke lagu dari playlist untuk mencegah dangling pointer
 void removeFromAllPlaylists(Playlist &P, int id) {
-    adrPlay curr = P.first, prev = nullptr;
+    adrPlay curr = P.first;
+    adrPlay prev = nullptr;
+    adrPlay temp;
     while (curr != nullptr) {
         if (curr->song->info.id == id) {
-            adrPlay toDelete = curr;
-            if (curr == P.first) {
-                P.first = curr->next;
-                if (curr == P.last) P.last = nullptr;
+            temp = curr;
+            if (temp == P.first) {
+                P.first = temp->next;
                 curr = P.first;
+                if (temp == P.last) {
+                    P.last = nullptr;
+                }
             } else {
-                prev->next = curr->next;
-                if (curr == P.last) P.last = prev;
-                curr = curr->next;
+                prev->next = temp->next;
+                curr = temp->next;
+                if (temp == P.last) {
+                    P.last = prev;
+                }
             }
-            delete toDelete;
+            temp->next = nullptr;
+            temp->song = nullptr;
         } else {
             prev = curr;
             curr = curr->next;
         }
     }
 }
-
 void playSong(adrLagu song, Stack &S) {
     if (song == nullptr){
         cout << "Lagu masih kosong!" << endl;
     }else{
-        cout << "\n♪♫ Sedang memutar: " << song->info.judul 
-         << " - " << song->info.artis << " ♫♪\n" << endl;
-        // Push ke history stack
+        cout << "\nSedang memutar: " << song->info.judul 
+         << " - " << song->info.artis << "\n" << endl;
         push(S, song);
     }
 }
-// LOGIC NEXT SONG: Cari lagu mirip di Library
-// Prioritas: 1. Artis sama, 2. Genre sama, 3. Fallback ke lagu pertama
 adrLagu nextSimilar(ListLagu L, adrLagu current) {
     if (current == nullptr) return L.first;
-    
-    // Prioritas 1: Cari lagu dengan artis yang sama
     adrLagu p = L.first;
     while (p != nullptr) {
         if (p != current && p->info.artis == current->info.artis){
@@ -195,8 +211,6 @@ adrLagu nextSimilar(ListLagu L, adrLagu current) {
         }    
         p = p->next;
     }
-    
-    // Prioritas 2: Cari lagu dengan genre yang sama
     p = L.first;
     while (p != nullptr) {
         if (p != current && p->info.genre == current->info.genre){
@@ -204,16 +218,11 @@ adrLagu nextSimilar(ListLagu L, adrLagu current) {
         }  
         p = p->next;
     }
-    
-    // Prioritas 3: Fallback - cari lagu berikutnya di library
     if (current->next != nullptr) {
         return current->next;
     }
-    
-    return L.first; // fallback ke awal
+    return L.first; 
 }
-
-// Fungsi untuk kembali ke lagu sebelumnya dari history (Stack)
 adrLagu previousSong(Stack &S) {
     return pop(S);
 }
