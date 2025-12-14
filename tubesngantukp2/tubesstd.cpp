@@ -22,10 +22,16 @@ void insertLagu(ListLagu &L, Lagu x) {
 }
 void showLibrary(ListLagu L) {
     adrLagu p = L.first;
+    cout << left << setw(5) << "ID" << setw(30) << "Judul" 
+         << setw(25) << "Artis" << setw(15) << "Genre" 
+         << "Tahun" << "\n";
+    cout << string(95, '-') << "\n";
     while (p != nullptr) {
-        cout << p->info.id << " - " << p->info.judul << " - " 
-             << p->info.artis << " - " << p->info.genre 
-             << " (" << p->info.tahun << ")\n";
+        cout << left << setw(5) << p->info.id 
+             << setw(30) << p->info.judul 
+             << setw(25) << p->info.artis 
+             << setw(15) << p->info.genre 
+             << p->info.tahun << "\n";
         p = p->next;
     }
 }
@@ -161,10 +167,16 @@ bool isInPlaylist(Playlist P, int id) {
 }
 void showPlaylist(Playlist P) {
     adrPlay p = P.first;
+    int idx = 1;
+    cout << left << setw(5) << "No" << setw(5) << "ID" 
+         << setw(35) << "Judul" << "Artis" << "\n";
+    cout << string(75, '-') << "\n";
     while (p != nullptr) {
-        cout << p->song->info.id << " - " << p->song->info.judul 
-             << " (" << p->song->info.artis << ")\n";
+        cout << left << setw(5) << idx << setw(5) << p->song->info.id 
+             << setw(35) << p->song->info.judul 
+             << p->song->info.artis << "\n";
         p = p->next;
+        ++idx;
     }
 }
 void createStack(Stack &S) {
@@ -188,6 +200,28 @@ adrLagu pop(Stack &S) {
         delete p;
     }
     return x;
+}
+void clearSongFromStacks(Stack &S, int id) {
+    // Rebuild stack without the deleted song
+    Stack temp;
+    createStack(temp);
+    adrLagu song;
+    
+    // Pop all and save to temp (excluding deleted song)
+    while (S.top != nullptr) {
+        song = pop(S);
+        if (song != nullptr && song->info.id != id) {
+            push(temp, song);
+        }
+    }
+    
+    // Restore back to original stack
+    while (temp.top != nullptr) {
+        song = pop(temp);
+        if (song != nullptr) {
+            push(S, song);
+        }
+    }
 }
 void createQueue(Queue &Q) {
     Q.head = Q.tail = nullptr;
@@ -230,13 +264,49 @@ bool isInQueue(Queue Q, int id) {
 void showQueue(Queue Q) {
     adrQ p = Q.head;
     int idx = 1;
+    if (Q.head == nullptr) {
+        cout << "(Antrian kosong)\n";
+        return;
+    }
+    cout << left << setw(5) << "No" << setw(5) << "ID" 
+         << setw(35) << "Judul" << "Artis" << "\n";
+    cout << string(75, '-') << "\n";
     while (p != nullptr) {
-        cout << idx << ". " << p->song->info.id << " - " << p->song->info.judul
-             << " (" << p->song->info.artis << ")\n";
+        cout << left << setw(5) << idx << setw(5) << p->song->info.id 
+             << setw(35) << p->song->info.judul 
+             << p->song->info.artis << "\n";
         p = p->next;
         ++idx;
     }
-    if (idx == 1) cout << "(Antrian kosong)\n";
+}
+void removeFromQueue(Queue &Q, int id) {
+    adrQ curr = Q.head;
+    adrQ prev = nullptr;
+    adrQ temp;
+    while (curr != nullptr) {
+        if (curr->song->info.id == id) {
+            temp = curr;
+            if (temp == Q.head) {
+                Q.head = temp->next;
+                curr = Q.head;
+                if (temp == Q.tail) {
+                    Q.tail = nullptr;
+                }
+            } else {
+                prev->next = temp->next;
+                curr = temp->next;
+                if (temp == Q.tail) {
+                    Q.tail = prev;
+                }
+            }
+            temp->next = nullptr;
+            temp->song = nullptr;
+            delete temp;
+        } else {
+            prev = curr;
+            curr = curr->next;
+        }
+    }
 }
 void removeFromAllPlaylists(Playlist &P, int id) {
     adrPlay curr = P.first;

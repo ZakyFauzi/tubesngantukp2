@@ -7,19 +7,19 @@
 			<Cursor1 position="8840" topLine="206" />
 		</Cursor>
 	</File>
-	<File name="tubesstd.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="0" topLine="0" />
-		</Cursor>
-	</File>
 	<File name="tubesstd.cpp" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="0" topLine="0" />
 		</Cursor>
 	</File>
+	<File name="tubesstd.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
 	<Target name="Debug" top="main.cpp">
-		<File name="main.cpp" />
-		<File name="tubesstd.h" />
 		<File name="tubesstd.cpp" />
+		<File name="tubesstd.h" />
+		<File name="main.cpp" />
 	</Target>
 </CodeBlocks_layout_file>

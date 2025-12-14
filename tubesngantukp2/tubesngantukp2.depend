@@ -1,10 +1,12 @@
 # depslib dependency file v1.0
-1765723980 source:c:\zaky\s1-telu\sem3\data structure\tubesngantukp2\tubesngantukp2\main.cpp
+1765725644 source:c:\zaky\s1-telu\sem3\data structure\tubesngantukp2\tubesngantukp2\main.cpp
 	<iostream>
 	<limits>
+	<string>
+	<cstdlib>
 	"tubesstd.h"
 
-1765724808 c:\zaky\s1-telu\sem3\data structure\tubesngantukp2\tubesngantukp2\tubesstd.h
+1765725394 c:\zaky\s1-telu\sem3\data structure\tubesngantukp2\tubesngantukp2\tubesstd.h
 	<iostream>
 	<string>
 

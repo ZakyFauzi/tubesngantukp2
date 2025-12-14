@@ -1,0 +1,752 @@
+=====================================
+   PSEUDOCODE MUSIC PLAYER NGANTUK
+=====================================
+
+==================== LIBRARY OPERATIONS ====================
+
+1. createListLagu(in/out L: ListLagu)
+Kamus Data
+   L : ListLagu
+Algoritma
+   L.first <- NIL
+   L.last <- NIL
+
+2. allocateLagu(in x: Lagu) -> adrLagu
+Kamus Data
+   x : Lagu
+   P : adrLagu
+Algoritma
+   P <- new ElmLagu
+   P->info <- x
+   P->next <- NIL
+   P->prev <- NIL
+   return P
+
+3. insertLagu(in/out L: ListLagu, in x: Lagu)
+Kamus Data
+   L : ListLagu
+   x : Lagu
+   P : adrLagu
+Algoritma
+   P <- allocateLagu(x)
+   if (L.first == NIL) then
+      L.first <- P
+      L.last <- P
+   else
+      L.last->next <- P
+      P->prev <- L.last
+      L.last <- P
+   endif
+
+4. showLibrary(in L: ListLagu)
+Kamus Data
+   L : ListLagu
+   P : adrLagu
+Algoritma
+   output("ID", "Judul", "Artis", "Genre", "Tahun")
+   output("-------------------------------------")
+   P <- L.first
+   while (P != NIL) do
+      output(P->info.id, P->info.judul, P->info.artis, P->info.genre, P->info.tahun)
+      P <- P->next
+   endwhile
+
+5. findLaguById(in L: ListLagu, in id: integer) -> adrLagu
+Kamus Data
+   L : ListLagu
+   id : integer
+   P : adrLagu
+Algoritma
+   P <- L.first
+   while (P != NIL) do
+      if (P->info.id == id) then
+         return P
+      endif
+      P <- P->next
+   endwhile
+   return NIL
+
+6. findLaguByTitle(in L: ListLagu, in judul: string) -> adrLagu
+Kamus Data
+   L : ListLagu
+   judul : string
+   P : adrLagu
+Algoritma
+   P <- L.first
+   while (P != NIL) do
+      if (P->info.judul == judul) then
+         return P
+      endif
+      P <- P->next
+   endwhile
+   return NIL
+
+7. findLaguByArtist(in L: ListLagu, in artis: string) -> adrLagu
+Kamus Data
+   L : ListLagu
+   artis : string
+   P : adrLagu
+Algoritma
+   P <- L.first
+   while (P != NIL) do
+      if (P->info.artis == artis) then
+         return P
+      endif
+      P <- P->next
+   endwhile
+   return NIL
+
+8. findLaguByGenre(in L: ListLagu, in genre: string) -> adrLagu
+Kamus Data
+   L : ListLagu
+   genre : string
+   P : adrLagu
+Algoritma
+   P <- L.first
+   while (P != NIL) do
+      if (P->info.genre == genre) then
+         return P
+      endif
+      P <- P->next
+   endwhile
+   return NIL
+
+9. sortLibraryById(in/out L: ListLagu)
+Kamus Data
+   L : ListLagu
+   P : adrLagu
+   swapped : boolean
+   tmp : Lagu
+Algoritma
+   if (L.first == NIL or L.first == L.last) then
+      return
+   endif
+   repeat
+      swapped <- false
+      P <- L.first
+      while (P != NIL and P->next != NIL) do
+         if (P->info.id > P->next->info.id) then
+            tmp <- P->info
+            P->info <- P->next->info
+            P->next->info <- tmp
+            swapped <- true
+         endif
+         P <- P->next
+      endwhile
+   until (swapped == false)
+
+10. updateLagu(in/out P: adrLagu, in baru: Lagu)
+Kamus Data
+   P : adrLagu
+   baru : Lagu
+Algoritma
+   if (P != NIL) then
+      P->info <- baru
+   endif
+
+11. deleteLagu(in/out L: ListLagu, in id: integer)
+Kamus Data
+   L : ListLagu
+   id : integer
+   P, temp : adrLagu
+Algoritma
+   P <- findLaguById(L, id)
+   if (P != NIL) then
+      temp <- P
+      if (temp == L.first and temp == L.last) then
+         L.first <- NIL
+         L.last <- NIL
+      else if (temp == L.first) then
+         L.first <- temp->next
+         L.first->prev <- NIL
+      else if (temp == L.last) then
+         L.last <- temp->prev
+         L.last->next <- NIL
+      else
+         temp->prev->next <- temp->next
+         temp->next->prev <- temp->prev
+      endif
+      temp->next <- NIL
+      temp->prev <- NIL
+      delete temp
+   endif
+
+==================== PLAYLIST OPERATIONS ====================
+
+12. createPlaylist(in/out P: Playlist)
+Kamus Data
+   P : Playlist
+Algoritma
+   P.first <- NIL
+   P.last <- NIL
+
+13. addToPlaylist(in/out P: Playlist, in song: adrLagu)
+Kamus Data
+   P : Playlist
+   song : adrLagu
+   pNode : adrPlay
+Algoritma
+   pNode <- new ElmPlay
+   pNode->song <- song
+   pNode->next <- NIL
+   if (P.first == NIL) then
+      P.first <- pNode
+      P.last <- pNode
+   else
+      P.last->next <- pNode
+      P.last <- pNode
+   endif
+
+14. removeFromPlaylist(in/out P: Playlist, in id: integer)
+Kamus Data
+   P : Playlist
+   id : integer
+   curr, prev, temp : adrPlay
+   found : boolean
+Algoritma
+   curr <- P.first
+   prev <- NIL
+   found <- false
+   while (curr != NIL and found == false) do
+      if (curr->song->info.id == id) then
+         temp <- curr
+         found <- true
+         if (temp == P.first) then
+            P.first <- temp->next
+            if (temp == P.last) then
+               P.last <- NIL
+            endif
+         else
+            prev->next <- temp->next
+            if (temp == P.last) then
+               P.last <- prev
+            endif
+         endif
+         temp->next <- NIL
+         temp->song <- NIL
+         delete temp
+      else
+         prev <- curr
+         curr <- curr->next
+      endif
+   endwhile
+
+15. isInPlaylist(in P: Playlist, in id: integer) -> boolean
+Kamus Data
+   P : Playlist
+   id : integer
+   pNode : adrPlay
+Algoritma
+   pNode <- P.first
+   while (pNode != NIL) do
+      if (pNode->song->info.id == id) then
+         return true
+      endif
+      pNode <- pNode->next
+   endwhile
+   return false
+
+16. showPlaylist(in P: Playlist)
+Kamus Data
+   P : Playlist
+   pNode : adrPlay
+   idx : integer
+Algoritma
+   output("No", "ID", "Judul", "Artis")
+   output("--------------------------------")
+   pNode <- P.first
+   idx <- 1
+   while (pNode != NIL) do
+      output(idx, pNode->song->info.id, pNode->song->info.judul, pNode->song->info.artis)
+      pNode <- pNode->next
+      idx <- idx + 1
+   endwhile
+
+17. removeFromAllPlaylists(in/out P: Playlist, in id: integer)
+Kamus Data
+   P : Playlist
+   id : integer
+   curr, prev, temp : adrPlay
+Algoritma
+   curr <- P.first
+   prev <- NIL
+   while (curr != NIL) do
+      if (curr->song->info.id == id) then
+         temp <- curr
+         if (temp == P.first) then
+            P.first <- temp->next
+            curr <- P.first
+            if (temp == P.last) then
+               P.last <- NIL
+            endif
+         else
+            prev->next <- temp->next
+            curr <- temp->next
+            if (temp == P.last) then
+               P.last <- prev
+            endif
+         endif
+         temp->next <- NIL
+         temp->song <- NIL
+         delete temp
+      else
+         prev <- curr
+         curr <- curr->next
+      endif
+   endwhile
+
+==================== STACK OPERATIONS (HISTORY) ====================
+
+18. createStack(in/out S: Stack)
+Kamus Data
+   S : Stack
+Algoritma
+   S.top <- NIL
+
+19. push(in/out S: Stack, in x: adrLagu)
+Kamus Data
+   S : Stack
+   x : adrLagu
+   P : adrS
+Algoritma
+   P <- new ElmStack
+   P->song <- x
+   P->next <- S.top
+   S.top <- P
+
+20. pop(in/out S: Stack) -> adrLagu
+Kamus Data
+   S : Stack
+   P : adrS
+   x : adrLagu
+Algoritma
+   x <- NIL
+   if (S.top != NIL) then
+      P <- S.top
+      S.top <- P->next
+      x <- P->song
+      P->next <- NIL
+      P->song <- NIL
+      delete P
+   endif
+   return x
+
+21. clearSongFromStacks(in/out S: Stack, in id: integer)
+Kamus Data
+   S : Stack
+   id : integer
+   temp : Stack
+   song : adrLagu
+Algoritma
+   createStack(temp)
+   // Pop semua dan simpan ke temp (kecuali yang dihapus)
+   while (S.top != NIL) do
+      song <- pop(S)
+      if (song != NIL and song->info.id != id) then
+         push(temp, song)
+      endif
+   endwhile
+   // Restore kembali ke stack asli
+   while (temp.top != NIL) do
+      song <- pop(temp)
+      if (song != NIL) then
+         push(S, song)
+      endif
+   endwhile
+
+==================== QUEUE OPERATIONS (ANTRIAN) ====================
+
+22. createQueue(in/out Q: Queue)
+Kamus Data
+   Q : Queue
+Algoritma
+   Q.head <- NIL
+   Q.tail <- NIL
+
+23. enqueue(in/out Q: Queue, in x: adrLagu)
+Kamus Data
+   Q : Queue
+   x : adrLagu
+   P : adrQ
+Algoritma
+   P <- new ElmQueue
+   P->song <- x
+   P->next <- NIL
+   if (Q.head == NIL) then
+      Q.head <- P
+      Q.tail <- P
+   else
+      Q.tail->next <- P
+      Q.tail <- P
+   endif
+
+24. dequeue(in/out Q: Queue) -> adrLagu
+Kamus Data
+   Q : Queue
+   P : adrQ
+   x : adrLagu
+Algoritma
+   x <- NIL
+   if (Q.head != NIL) then
+      P <- Q.head
+      Q.head <- P->next
+      if (Q.head == NIL) then
+         Q.tail <- NIL
+      endif
+      x <- P->song
+      P->next <- NIL
+      P->song <- NIL
+      delete P
+   endif
+   return x
+
+25. isInQueue(in Q: Queue, in id: integer) -> boolean
+Kamus Data
+   Q : Queue
+   id : integer
+   P : adrQ
+Algoritma
+   P <- Q.head
+   while (P != NIL) do
+      if (P->song->info.id == id) then
+         return true
+      endif
+      P <- P->next
+   endwhile
+   return false
+
+26. showQueue(in Q: Queue)
+Kamus Data
+   Q : Queue
+   P : adrQ
+   idx : integer
+Algoritma
+   if (Q.head == NIL) then
+      output("(Antrian kosong)")
+      return
+   endif
+   output("No", "ID", "Judul", "Artis")
+   output("--------------------------------")
+   P <- Q.head
+   idx <- 1
+   while (P != NIL) do
+      output(idx, P->song->info.id, P->song->info.judul, P->song->info.artis)
+      P <- P->next
+      idx <- idx + 1
+   endwhile
+
+27. removeFromQueue(in/out Q: Queue, in id: integer)
+Kamus Data
+   Q : Queue
+   id : integer
+   curr, prev, temp : adrQ
+Algoritma
+   curr <- Q.head
+   prev <- NIL
+   while (curr != NIL) do
+      if (curr->song->info.id == id) then
+         temp <- curr
+         if (temp == Q.head) then
+            Q.head <- temp->next
+            curr <- Q.head
+            if (temp == Q.tail) then
+               Q.tail <- NIL
+            endif
+         else
+            prev->next <- temp->next
+            curr <- temp->next
+            if (temp == Q.tail) then
+               Q.tail <- prev
+            endif
+         endif
+         temp->next <- NIL
+         temp->song <- NIL
+         delete temp
+      else
+         prev <- curr
+         curr <- curr->next
+      endif
+   endwhile
+
+==================== PLAYER OPERATIONS ====================
+
+28. playSong(in song: adrLagu, in/out S: Stack)
+Kamus Data
+   song : adrLagu
+   S : Stack
+Algoritma
+   if (song == NIL) then
+      output("Lagu masih kosong!")
+   else
+      output("Now Playing")
+      output("Judul:", song->info.judul)
+      output("Artis:", song->info.artis)
+      output("Genre:", song->info.genre)
+      output("Tahun:", song->info.tahun)
+      push(S, song)
+   endif
+
+29. stopSong(in/out isPlaying: boolean)
+Kamus Data
+   isPlaying : boolean
+Algoritma
+   if (isPlaying == true) then
+      output("Stop Pemutaran")
+      isPlaying <- false
+   else
+      output("Tidak ada lagu yang sedang diputar")
+   endif
+
+30. nextSimilar(in L: ListLagu, in current: adrLagu) -> adrLagu
+Kamus Data
+   L : ListLagu
+   current : adrLagu
+   P : adrLagu
+Algoritma
+   if (current == NIL) then
+      return L.first
+   endif
+   // Cari lagu dengan artis yang sama
+   P <- L.first
+   while (P != NIL) do
+      if (P != current and P->info.artis == current->info.artis) then
+         return P
+      endif
+      P <- P->next
+   endwhile
+   // Cari lagu dengan genre yang sama
+   P <- L.first
+   while (P != NIL) do
+      if (P != current and P->info.genre == current->info.genre) then
+         return P
+      endif
+      P <- P->next
+   endwhile
+   // Cari lagu berikutnya di library
+   if (current->next != NIL and current->next != current) then
+      return current->next
+   endif
+   return NIL
+
+31. previousSong(in/out S: Stack) -> adrLagu
+Kamus Data
+   S : Stack
+Algoritma
+   return pop(S)
+
+==================== MAIN PROGRAM FLOW ====================
+
+32. Main Program
+Kamus Data
+   L : ListLagu
+   P : Playlist
+   historyLib, historyPl, historyQ : Stack
+   Q : Queue
+   role, menu : integer
+   current : adrLagu
+   isPlaying : boolean
+   currentMode : PlayerMode
+Algoritma
+   // Inisialisasi struktur data
+   createListLagu(L)
+   createPlaylist(P)
+   createStack(historyLib)
+   createStack(historyPl)
+   createStack(historyQ)
+   createQueue(Q)
+   
+   // Load data dummy 15 lagu
+   for i <- 1 to 15 do
+      insertLagu(L, dummy[i])
+   endfor
+   
+   // Loop menu login
+   running <- true
+   while (running == true) do
+      clearScreen()
+      output("CONSOLE MUSIC PLAYER NGANTUK")
+      output("[1] Login sebagai Admin")
+      output("[2] Login sebagai User")
+      output("[3] Exit")
+      input(role)
+      
+      if (role == 1) then
+         // Admin Menu
+         menu <- 1
+         while (menu != 0) do
+            clearScreen()
+            output("MENU ADMIN")
+            output("[1] Tambah Lagu ke Library")
+            output("[2] Tampilkan Semua Lagu")
+            output("[3] Update Data Lagu")
+            output("[4] Hapus Lagu dari Library")
+            output("[0] Logout")
+            input(menu)
+            
+            if (menu == 1) then
+               // Tambah lagu
+               input(id, judul, artis, genre, tahun)
+               if (findLaguById(L, id) == NIL) then
+                  insertLagu(L, laguBaru)
+                  output("Lagu berhasil ditambahkan")
+               else
+                  output("ID sudah digunakan")
+               endif
+            else if (menu == 2) then
+               // Tampilkan library
+               sortLibraryById(L)
+               showLibrary(L)
+            else if (menu == 3) then
+               // Update lagu
+               input(id)
+               P <- findLaguById(L, id)
+               if (P != NIL) then
+                  input(judulBaru, artistBaru, genreBaru, tahunBaru)
+                  updateLagu(P, lagubaru)
+                  output("Data berhasil diupdate")
+               endif
+            else if (menu == 4) then
+               // Hapus lagu
+               input(id)
+               P <- findLaguById(L, id)
+               if (P != NIL) then
+                  removeFromAllPlaylists(P, id)
+                  removeFromQueue(Q, id)
+                  clearSongFromStacks(historyLib, id)
+                  clearSongFromStacks(historyPl, id)
+                  clearSongFromStacks(historyQ, id)
+                  deleteLagu(L, id)
+                  output("Lagu berhasil dihapus")
+               endif
+            endif
+         endwhile
+         
+      else if (role == 2) then
+         // User Menu
+         menu <- 1
+         current <- NIL
+         isPlaying <- false
+         currentMode <- MODE_LIBRARY
+         
+         while (menu != 0) do
+            clearScreen()
+            output("MENU USER")
+            if (current != NIL) then
+               output("Now:", current->info.judul)
+            endif
+            output("1. Library")
+            output("2. Cari & Pilih")
+            output("3. Playlist")
+            output("4. Antrian")
+            output("5. Now Playing")
+            output("0. Logout")
+            input(menu)
+            
+            if (menu == 1) then
+               // Submenu Library
+               sortLibraryById(L)
+               showLibrary(L)
+               input(id)
+               if (id != 0) then
+                  current <- findLaguById(L, id)
+               endif
+               
+            else if (menu == 2) then
+               // Submenu Cari
+               output("1. ID, 2. Judul, 3. Artis, 4. Genre")
+               input(pilihan)
+               if (pilihan == 1) then
+                  current <- findLaguById(L, id)
+               else if (pilihan == 2) then
+                  current <- findLaguByTitle(L, judul)
+               else if (pilihan == 3) then
+                  current <- findLaguByArtist(L, artis)
+               else if (pilihan == 4) then
+                  current <- findLaguByGenre(L, genre)
+               endif
+               
+            else if (menu == 3) then
+               // Submenu Playlist
+               output("1. Lihat, 2. Tambah, 3. Hapus, 4. Putar")
+               input(submenu)
+               if (submenu == 1) then
+                  showPlaylist(P)
+               else if (submenu == 2) then
+                  input(id)
+                  song <- findLaguById(L, id)
+                  if (song != NIL and isInPlaylist(P, id) == false) then
+                     addToPlaylist(P, song)
+                  endif
+               else if (submenu == 3) then
+                  input(id)
+                  removeFromPlaylist(P, id)
+               else if (submenu == 4) then
+                  if (P.first != NIL) then
+                     current <- P.first->song
+                     currentMode <- MODE_PLAYLIST
+                     playSong(current, historyPl)
+                     isPlaying <- true
+                  endif
+               endif
+               
+            else if (menu == 4) then
+               // Submenu Antrian
+               output("1. Tambah, 2. Lihat, 3. Putar Berikutnya")
+               input(submenu)
+               if (submenu == 1) then
+                  input(id)
+                  song <- findLaguById(L, id)
+                  if (song != NIL and isInQueue(Q, id) == false) then
+                     enqueue(Q, song)
+                  endif
+               else if (submenu == 2) then
+                  showQueue(Q)
+               else if (submenu == 3) then
+                  nxt <- dequeue(Q)
+                  if (nxt != NIL) then
+                     current <- nxt
+                     currentMode <- MODE_QUEUE
+                     playSong(current, historyQ)
+                     isPlaying <- true
+                  endif
+               endif
+               
+            else if (menu == 5) then
+               // Submenu Now Playing
+               output("1. Putar, 2. Stop, 3. Next, 4. Previous")
+               input(submenu)
+               if (submenu == 1) then
+                  if (current != NIL) then
+                     playSong(current, history[currentMode])
+                     isPlaying <- true
+                  endif
+               else if (submenu == 2) then
+                  stopSong(isPlaying)
+               else if (submenu == 3) then
+                  // Next logic berdasarkan mode
+                  if (playingFromPlaylist and currentPlayNode->next != NIL) then
+                     current <- currentPlayNode->next->song
+                     playSong(current, historyPl)
+                  else
+                     cand <- nextSimilar(L, current)
+                     if (cand != NIL) then
+                        current <- cand
+                        playSong(current, historyLib)
+                     endif
+                  endif
+               else if (submenu == 4) then
+                  prev <- previousSong(history[currentMode])
+                  if (prev != NIL) then
+                     current <- prev
+                  endif
+               endif
+            endif
+         endwhile
+         
+      else if (role == 3) then
+         output("Terima kasih!")
+         running <- false
+      endif
+   endwhile
+
+==================== END OF PSEUDOCODE ====================

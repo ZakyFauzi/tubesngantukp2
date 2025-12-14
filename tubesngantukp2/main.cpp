@@ -2,6 +2,7 @@
 #include <limits>
 #include <string>
 #include <cstdlib>
+#include <iomanip>
 #include "tubesstd.h"
 using namespace std;
 
@@ -98,14 +99,17 @@ int main() {
                 // Cegah duplikasi ID (unik)
                 if (findLaguById(L, x.id) != nullptr) {
                     cout << "\n[ERROR] ID lagu sudah digunakan. Gunakan ID lain.\n";
+                    cout << "\nTekan Enter untuk kembali..."; cin.get();
                     continue;
                 }
                 cout << "Judul Lagu: "; getline(cin, x.judul);
                 cout << "Nama Artis: "; getline(cin, x.artis);
                 cout << "Genre: "; getline(cin, x.genre);
                 cout << "Tahun Rilis: "; cin >> x.tahun;
+                clearInputBuffer();
                 insertLagu(L, x);
                 cout << "\nLagu berhasil ditambahkan ke Library!\n";
+                cout << "\nTekan Enter untuk kembali..."; cin.get();
             }
             else if (menu == 2) {
                 cout << "\n=== LIBRARY LAGU NGANTUK ===\n";
@@ -115,6 +119,7 @@ int main() {
                     sortLibraryById(L);
                     showLibrary(L);
                 }
+                cout << "\nTekan Enter untuk kembali..."; cin.get();
             }
             else if (menu == 3) {
                 int id; 
@@ -129,6 +134,7 @@ int main() {
                     cout << "Artis Baru: "; getline(cin, baru.artis);
                     cout << "Genre Baru: "; getline(cin, baru.genre);
                     cout << "Tahun Baru: "; cin >> baru.tahun;
+                    clearInputBuffer();
                     baru.id = id;
                     updateLagu(p, baru);
                     cout << "\nData lagu berhasil diupdate!\n";
@@ -136,19 +142,26 @@ int main() {
                 } else {
                     cout << "\nLagu dengan ID " << id << " tidak ditemukan!\n";
                 }
+                cout << "\nTekan Enter untuk kembali..."; cin.get();
             }
             else if (menu == 4) {
                 int id; 
-                cout << "\nMasukkan ID lagu yang ingin dihapus: "; 
+                cout << "\nMasukkan ID lagu yang ingin dihapus: ";
                 cin >> id;
+                clearInputBuffer();
                 adrLagu p = findLaguById(L, id);
                 if (p != nullptr) {
                     removeFromAllPlaylists(P, id);
+                    removeFromQueue(Q, id);
+                    clearSongFromStacks(historyLib, id);
+                    clearSongFromStacks(historyPl, id);
+                    clearSongFromStacks(historyQ, id);
                     deleteLagu(L, id);
-                    cout << "\nLagu berhasil dihapus dari Library dan Playlist!\n";
+                    cout << "\nLagu berhasil dihapus dari Library, Playlist, Queue, dan History!\n";
                 } else {
                     cout << "\nLagu dengan ID " << id << " tidak ditemukan!\n";
                 }
+                cout << "\nTekan Enter untuk kembali..."; cin.get();
             }
         }
         continue; // kembali ke menu login

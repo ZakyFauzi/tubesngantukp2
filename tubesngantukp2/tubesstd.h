@@ -2,6 +2,7 @@
 #define TUBESSTD_H_INCLUDED
 #include <iostream>
 #include <string>
+#include <iomanip>
 using namespace std;
 typedef struct ElmLagu *adrLagu;
 typedef struct ElmPlay *adrPlay;
@@ -67,12 +68,14 @@ void showPlaylist(Playlist P);
 void createStack(Stack &S);
 void push(Stack &S, adrLagu x);
 adrLagu pop(Stack &S);
+void clearSongFromStacks(Stack &S, int id);
 // Queue
 void createQueue(Queue &Q);
 void enqueue(Queue &Q, adrLagu x);
 adrLagu dequeue(Queue &Q);
 bool isInQueue(Queue Q, int id);
 void showQueue(Queue Q);
+void removeFromQueue(Queue &Q, int id);
 // Player
 void playSong(adrLagu song, Stack &S);
 adrLagu nextSimilar(ListLagu L, adrLagu current);
