@@ -1,5 +1,7 @@
 #include <iostream>
 #include <limits>
+#include <string>
+#include <cstdlib>
 #include "tubesstd.h"
 using namespace std;
 
@@ -11,12 +13,17 @@ void clearInputBuffer() {
 int main() {
     ListLagu L; 
     Playlist P; 
-    Stack S; 
+    // History terpisah per mode
+    Stack historyLib; 
+    Stack historyPl; 
+    Stack historyQ; 
     Queue Q;
 
     createListLagu(L);
     createPlaylist(P);
-    createStack(S);
+    createStack(historyLib);
+    createStack(historyPl);
+    createStack(historyQ);
     createQueue(Q);
 
     //Data Dummy (15 Lagu)
@@ -42,31 +49,43 @@ int main() {
         insertLagu(L, dummy[i]);
     }
 
-    int role;
-    cout << "\n====================================\n";
-    cout << "   CONSOLE MUSIC PLAYER NGANTUK\n";
-    cout << "====================================\n";
-    cout << "1. Login sebagai Admin\n";
-    cout << "2. Login sebagai User\n";
-    cout << "3. Exit\n";
-    cout << "====================================\n";
-    cout << "Pilih role: ";
-    cin >> role;
-    clearInputBuffer();
+    auto clearScreen = [](){
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+    };
+
+    int role = 0;
+    bool running = true;
+    while (running) {
+        clearScreen();
+        cout << "\n+====================================+\n";
+        cout << "|      CONSOLE MUSIC PLAYER NGANTUK   |\n";
+        cout << "+====================================+\n";
+        cout << "| [1] Login sebagai Admin             |\n";
+        cout << "| [2] Login sebagai User              |\n";
+        cout << "| [3] Exit                            |\n";
+        cout << "+------------------------------------+\n";
+        cout << "Pilih role: ";
+        cin >> role;
+        clearInputBuffer();
     
     //Menu Admin
     if (role == 1) {
         int menu = 1;
         while (menu != 0) {
-            cout << "\n====================================\n";
-            cout << " MENU ADMIN NGANTUK\n";
-            cout << "====================================\n";
-            cout << "1. Tambah Lagu ke Library\n";
-            cout << "2. Tampilkan Semua Lagu (Library)\n";
-            cout << "3. Update Data Lagu\n";
-            cout << "4. Hapus Lagu dari Library\n";
-            cout << "0. Logout (Kembali ke Menu Utama)\n";
-            cout << "====================================\n";
+            clearScreen();
+            cout << "\n+======================================+\n";
+            cout <<   "|          MENU ADMIN NGANTUK         |\n";
+            cout <<   "+======================================+\n";
+            cout <<   "| [1] Tambah Lagu ke Library          |\n";
+            cout <<   "| [2] Tampilkan Semua Lagu            |\n";
+            cout <<   "| [3] Update Data Lagu                |\n";
+            cout <<   "| [4] Hapus Lagu dari Library         |\n";
+            cout <<   "| [0] Logout (Menu Login)             |\n";
+            cout <<   "+--------------------------------------+\n";
             cout << "Pilihan: ";
             cin >> menu;
             clearInputBuffer();
@@ -76,6 +95,11 @@ int main() {
                 cout << "\n--- Tambah Lagu Baru ---\n";
                 cout << "ID Lagu: "; cin >> x.id;
                 clearInputBuffer();
+                // Cegah duplikasi ID (unik)
+                if (findLaguById(L, x.id) != nullptr) {
+                    cout << "\n[ERROR] ID lagu sudah digunakan. Gunakan ID lain.\n";
+                    continue;
+                }
                 cout << "Judul Lagu: "; getline(cin, x.judul);
                 cout << "Nama Artis: "; getline(cin, x.artis);
                 cout << "Genre: "; getline(cin, x.genre);
@@ -84,12 +108,11 @@ int main() {
                 cout << "\nLagu berhasil ditambahkan ke Library!\n";
             }
             else if (menu == 2) {
-                cout << "\n====================================\n";
-                cout << " LIBRARY LAGU NGANTUK\n";
-                cout << "====================================\n";
+                cout << "\n=== LIBRARY LAGU NGANTUK ===\n";
                 if (L.first == nullptr) {
                     cout << "Library masih kosong.\n";
                 } else {
+                    sortLibraryById(L);
                     showLibrary(L);
                 }
             }
@@ -109,7 +132,7 @@ int main() {
                     baru.id = id;
                     updateLagu(p, baru);
                     cout << "\nData lagu berhasil diupdate!\n";
-                    cout << "  (Perubahan otomatis terefleksi di Playlist karena menggunakan pointer)\n";
+                    cout << "  (Perubahan otomatis terefleksi di Playlist karena pointer)\n";
                 } else {
                     cout << "\nLagu dengan ID " << id << " tidak ditemukan!\n";
                 }
@@ -128,6 +151,7 @@ int main() {
                 }
             }
         }
+        continue; // kembali ke menu login
     }
     //Menu User
     else if (role == 2) {
@@ -135,163 +159,220 @@ int main() {
         adrLagu current = nullptr;
         bool playingFromPlaylist = false; 
         adrPlay currentPlayNode = nullptr; 
-        
-        while (menu != 0) {
-            cout << "\n====================================\n";
-            cout << "  MENU USER NGANTUK\n";
-            cout << "====================================\n";
-            cout << "1. Lihat Library Lagu\n";
-            cout << "2. Cari & Pilih Lagu\n";
-            cout << "3. Putar Lagu (Play)\n";
-            cout << "4. Next Song (Lagu Mirip/Playlist)\n";
-            cout << "5. Previous (History)\n";
-            cout << "6. Tambahkan Lagu ke Playlist\n";
-            cout << "7. Lihat Playlist Saya\n";
-            cout << "8. Hapus Lagu dari Playlist\n";
-            cout << "9. Putar Dari Playlist\n";
-            cout << "10. Tambah ke Antrian (Queue)\n";
-            cout << "11. Putar dari Antrian\n";
-            cout << "0. Logout (Kembali ke Menu Utama)\n";
-            cout << "====================================\n";
-            if (current != nullptr) {
-                cout << "Now: " << current->info.judul << " - " << current->info.artis << "\n";
+        PlayerMode currentMode = MODE_LIBRARY;
+        bool isPlaying = false;
+
+        auto headline = [](const string &title){
+            const int innerWidth = 36;
+            const string bar = "+" + string(innerWidth + 2, '-') + "+\n";
+            string label = title;
+            if ((int)label.size() > innerWidth) {
+                label = label.substr(0, innerWidth);
             }
+            string padding(innerWidth - (int)label.size(), ' ');
+            cout << "\n" << bar;
+            cout << "| " << label << padding << " |\n";
+            cout << bar;
+        };
+
+        while (menu != 0) {
+            clearScreen();
+            headline("MENU USER NGANTUK");
+            if (current) {
+                cout << "[Now] " << current->info.judul << " - " << current->info.artis;
+                if (!isPlaying) cout << " (paused)";
+                cout << "\n------------------------------------\n";
+            }
+            cout << "1. Library" << "\n";
+            cout << "2. Cari & Pilih" << "\n";
+            cout << "3. Playlist" << "\n";
+            cout << "4. Antrian" << "\n";
+            cout << "5. Now Playing" << "\n";
+            cout << "0. Logout" << "\n";
             cout << "Pilihan: ";
             cin >> menu;
             clearInputBuffer();
 
+            // Submenu Library
             if (menu == 1) {
-                cout << "\n====================================\n";
-                cout << " LIBRARY LAGU NGANTUK\n";
-                cout << "====================================\n";
+                clearScreen();
+                headline("LIBRARY");
                 if (L.first == nullptr) {
                     cout << "Library masih kosong.\n";
                 } else {
+                    sortLibraryById(L);
                     showLibrary(L);
+                    cout << "\nPilih ID lagu untuk set sebagai current (0 untuk batal): ";
+                    int id; cin >> id; clearInputBuffer();
+                    if (id != 0) {
+                        adrLagu p = findLaguById(L, id);
+                        if (p) { current = p; playingFromPlaylist = false; cout << "Dipilih.\n"; }
+                        else cout << "ID tidak ditemukan.\n";
+                    }
                 }
+                cout << "Tekan Enter untuk kembali..."; cin.get();
             }
+            // Submenu Cari
             else if (menu == 2) {
-                int id; 
-                cout << "\nMasukkan ID Lagu: "; 
-                cin >> id;
-                adrLagu p = findLaguById(L, id);
-                if (p != nullptr) {
-                    cout << "\nLagu ditemukan!\n";
-                    cout << "  " << p->info.judul << " - " << p->info.artis 
-                         << " (" << p->info.genre << ", " << p->info.tahun << ")\n";
-                    current = p;
-                    playingFromPlaylist = false;
-                } else {
-                    cout << "\nLagu dengan ID " << id << " tidak ditemukan!\n";
+                clearScreen(); headline("CARI LAGU");
+                cout << "1. Berdasarkan ID\n2. Berdasarkan Judul\n3. Berdasarkan Artis\n4. Berdasarkan Genre\nPilihan: ";
+                int sm; cin >> sm; clearInputBuffer();
+                adrLagu r = nullptr;
+                if (sm == 1) {
+                    int id; cout << "Masukkan ID: "; cin >> id; clearInputBuffer();
+                    r = findLaguById(L, id);
+                } else if (sm == 2) {
+                    string j; cout << "Masukkan Judul: "; getline(cin, j); r = findLaguByTitle(L, j);
+                } else if (sm == 3) {
+                    string a; cout << "Masukkan Artis: "; getline(cin, a); r = findLaguByArtist(L, a);
+                } else if (sm == 4) {
+                    string g; cout << "Masukkan Genre: "; getline(cin, g); r = findLaguByGenre(L, g);
                 }
+                if (r) {
+                    current = r; playingFromPlaylist = false;
+                    cout << "\nDitemukan: " << r->info.judul << " - " << r->info.artis << "\n";
+                    cout << "Putar sekarang? (y/n): ";
+                    char c; cin >> c; clearInputBuffer();
+                    if (c == 'y' || c == 'Y') {
+                        currentMode = MODE_LIBRARY;
+                        playSong(current, historyLib); isPlaying = true;
+                    }
+                } else {
+                    cout << "\nTidak ditemukan.\n";
+                }
+                cout << "Tekan Enter untuk kembali..."; cin.get();
             }
+            // Submenu Playlist
             else if (menu == 3) {
-                if (current != nullptr) {
-                    playSong(current, S);
-                } else {
-                    cout << "\nBelum memilih lagu! Gunakan menu 2 untuk memilih lagu.\n";
-                }
-            }
-            else if (menu == 4) {
-                if (current != nullptr) {
-                    if (playingFromPlaylist && currentPlayNode != nullptr) {
-                        if (currentPlayNode->next != nullptr) {
-                            currentPlayNode = currentPlayNode->next;
-                            current = currentPlayNode->song;
-                            cout << "\nNext (Playlist Mode)\n";
-                            playSong(current, S);
+                int pm = 1;
+                while (pm != 0) {
+                    clearScreen(); headline("PLAYLIST");
+                    cout << "1. Lihat Playlist\n";
+                    cout << "2. Tambah Lagu (ID)\n";
+                    cout << "3. Hapus Lagu (ID)\n";
+                    cout << "4. Putar dari Playlist (awal)\n";
+                    cout << "0. Kembali\n";
+                    cout << "Pilihan: "; cin >> pm; clearInputBuffer();
+                    if (pm == 1) {
+                        if (P.first == nullptr) cout << "Playlist kosong.\n"; else showPlaylist(P);
+                        cout << "Tekan Enter..."; cin.get();
+                    } else if (pm == 2) {
+                        int id; cout << "ID lagu: "; cin >> id; clearInputBuffer();
+                        adrLagu p = findLaguById(L, id);
+                        if (!p) {
+                            cout << "Tidak ditemukan.\n";
+                        } else if (isInPlaylist(P, id)) {
+                            cout << "Sudah ada di playlist.\n";
                         } else {
-                            cout << "\nSudah lagu terakhir di playlist!\n";
+                            addToPlaylist(P, p); cout << "Ditambahkan.\n";
                         }
+                        cout << "Tekan Enter..."; cin.get();
+                    } else if (pm == 3) {
+                        int id; cout << "ID lagu yang dihapus: "; cin >> id; clearInputBuffer();
+                        removeFromPlaylist(P, id); cout << "Dihapus jika ada.\n";
+                        cout << "Tekan Enter..."; cin.get();
+                    } else if (pm == 4) {
+                        if (P.first) {
+                            currentPlayNode = P.first; current = currentPlayNode->song;
+                            playingFromPlaylist = true; currentMode = MODE_PLAYLIST;
+                            playSong(current, historyPl); isPlaying = true;
+                        } else cout << "Playlist kosong.\n";
+                        cout << "Tekan Enter..."; cin.get();
                     }
-                    else {
-                        current = nextSimilar(L, current);
-                        cout << "\nNext (Library Mode - Cari Lagu Mirip)\n";
-                        playSong(current, S);
-                    }
-                } else {
-                    cout << "\nBelum ada lagu yang diputar!\n";
                 }
             }
+            // Submenu Antrian
+            else if (menu == 4) {
+                int qm = 1;
+                while (qm != 0) {
+                    clearScreen(); headline("ANTRIAN");
+                    cout << "1. Tambah ke Antrian (ID)\n";
+                    cout << "2. Lihat Antrian\n";
+                    cout << "3. Putar Lagu Berikutnya (dequeue)\n";
+                    cout << "0. Kembali\n";
+                    cout << "Pilihan: "; cin >> qm; clearInputBuffer();
+                    if (qm == 1) {
+                        int id; cout << "ID lagu: "; cin >> id; clearInputBuffer();
+                        adrLagu p = findLaguById(L, id);
+                        if (!p) {
+                            cout << "Tidak ditemukan.\n";
+                        } else if (isInQueue(Q, id)) {
+                            cout << "Sudah ada di antrian.\n";
+                        } else {
+                            enqueue(Q, p); cout << "Ditambahkan ke antrian.\n";
+                        }
+                        cout << "Tekan Enter..."; cin.get();
+                    } else if (qm == 2) {
+                        showQueue(Q);
+                        cout << "Tekan Enter..."; cin.get();
+                    } else if (qm == 3) {
+                        adrLagu nxt = dequeue(Q);
+                        if (nxt) { current = nxt; playingFromPlaylist = false; currentMode = MODE_QUEUE; playSong(current, historyQ); isPlaying = true; }
+                        else cout << "Antrian kosong.\n";
+                        cout << "Tekan Enter..."; cin.get();
+                    }
+                }
+            }
+            // Submenu Now Playing (kontrol utama)
             else if (menu == 5) {
-                adrLagu prev = previousSong(S);
-                if (prev != nullptr) {
-                    current = prev;
-                    cout << "\nKembali ke lagu sebelumnya (History)\n";
-                    cout << "  " << current->info.judul << " - " << current->info.artis << "\n";
-                } else {
-                    cout << "\nHistory kosong!\n";
-                }
-            }
-            else if (menu == 6) {
-                int id; 
-                cout << "\nMasukkan ID Lagu: "; 
-                cin >> id;
-                adrLagu p = findLaguById(L, id);
-                if (p != nullptr) {
-                    addToPlaylist(P, p); 
-                    cout << "\nLagu ditambahkan ke Playlist!\n";
-                } else {
-                    cout << "\nLagu tidak ditemukan!\n";
-                }
-            }
-            else if (menu == 7) {
-                cout << "\n====================================\n";
-                cout << "PLAYLIST NGANTUK SAYA\n";
-                cout << "====================================\n";
-                if (P.first == nullptr) {
-                    cout << "Playlist masih kosong.\n";
-                } else {
-                    showPlaylist(P);
-                }
-            }
-            else if (menu == 8) {
-                int id; 
-                cout << "\nMasukkan ID Lagu yang ingin dihapus dari playlist: "; 
-                cin >> id;
-                removeFromPlaylist(P, id);
-                cout << "\nLagu dihapus dari playlist!\n";
-            }
-            else if (menu == 9) {
-                if (P.first != nullptr) {
-                    currentPlayNode = P.first;
-                    current = currentPlayNode->song;
-                    playingFromPlaylist = true;
-                    cout << "\nMemutar dari Playlist\n";
-                    playSong(current, S);
-                } else {
-                    cout << "\nPlaylist kosong!\n";
-                }
-            }
-            else if (menu == 10) {
-                int id; 
-                cout << "\nMasukkan ID Lagu untuk antrian: "; 
-                cin >> id;
-                adrLagu p = findLaguById(L, id);
-                if (p != nullptr) {
-                    enqueue(Q, p);
-                    cout << "\nLagu ditambahkan ke Antrian!\n";
-                } else {
-                    cout << "\nLagu tidak ditemukan!\n";
-                }
-            }
-            else if (menu == 11) {
-                adrLagu next = dequeue(Q);
-                if (next != nullptr) {
-                    current = next;
-                    playingFromPlaylist = false;
-                    playSong(current, S);
-                } else {
-                    cout << "\nAntrian kosong!\n";
+                int nm = 1;
+                while (nm != 0) {
+                    clearScreen(); headline("NOW PLAYING");
+                    if (current) {
+                        cout << "[Now] " << current->info.judul << " - " << current->info.artis << "\n";
+                    } else {
+                        cout << "Belum ada lagu dipilih.\n";
+                    }
+                    cout << "1. Putar lagu saat ini\n";
+                    cout << "2. Stop\n";
+                    cout << "3. Next (mirip / playlist / queue)\n";
+                    cout << "4. Previous (history)\n";
+                    cout << "0. Kembali\n";
+                    cout << "Pilihan: "; cin >> nm; clearInputBuffer();
+                    if (nm == 1) {
+                        if (current) {
+                            if (playingFromPlaylist) { currentMode = MODE_PLAYLIST; playSong(current, historyPl); }
+                            else if (currentMode == MODE_QUEUE) { playSong(current, historyQ); }
+                            else { currentMode = MODE_LIBRARY; playSong(current, historyLib); }
+                            isPlaying = true;
+                        } else cout << "Belum memilih lagu.\n";
+                        cout << "Tekan Enter..."; cin.get();
+                    } else if (nm == 2) {
+                        stopSong(isPlaying); cout << "Tekan Enter..."; cin.get();
+                    } else if (nm == 3) {
+                        if (current) {
+                            if (playingFromPlaylist && currentPlayNode) {
+                                if (currentPlayNode->next) { currentPlayNode = currentPlayNode->next; current = currentPlayNode->song; currentMode = MODE_PLAYLIST; playSong(current, historyPl); isPlaying = true; }
+                                else cout << "Sudah lagu terakhir di playlist.\n";
+                            } else {
+                                adrLagu cand = nextSimilar(L, current);
+                                if (cand) { current = cand; currentMode = MODE_LIBRARY; playSong(current, historyLib); isPlaying = true; }
+                                else if (L.first) { current = L.first; currentMode = MODE_LIBRARY; playSong(current, historyLib); isPlaying = true; }
+                                else cout << "Tidak ada lagu mirip atau berikutnya.\n";
+                            }
+                        } else cout << "Belum ada lagu yang diputar.\n";
+                        cout << "Tekan Enter..."; cin.get();
+                    } else if (nm == 4) {
+                        adrLagu prev = nullptr;
+                        if (currentMode == MODE_PLAYLIST) prev = previousSong(historyPl);
+                        else if (currentMode == MODE_QUEUE) prev = previousSong(historyQ);
+                        else prev = previousSong(historyLib);
+                        if (prev) { current = prev; cout << "Kembali ke: " << current->info.judul << "\n"; }
+                        else cout << "History kosong.\n";
+                        cout << "Tekan Enter..."; cin.get();
+                    }
                 }
             }
         }
+        continue; // kembali ke menu login
     }
     else if (role == 3) {
         cout << "\nTerima kasih telah menggunakan Music Player Ngantuk!\n";
+        running = false; // end program
     }
     else {
         cout << "\nPilihan tidak valid!\n";
+    }
     }
     return 0;
 }

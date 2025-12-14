@@ -29,6 +29,47 @@ void showLibrary(ListLagu L) {
         p = p->next;
     }
 }
+adrLagu findLaguByTitle(ListLagu L, const string &judul) {
+    adrLagu p = L.first;
+    while (p != nullptr) {
+        if (p->info.judul == judul) return p;
+        p = p->next;
+    }
+    return nullptr;
+}
+adrLagu findLaguByArtist(ListLagu L, const string &artis) {
+    adrLagu p = L.first;
+    while (p != nullptr) {
+        if (p->info.artis == artis) return p;
+        p = p->next;
+    }
+    return nullptr;
+}
+adrLagu findLaguByGenre(ListLagu L, const string &genre) {
+    adrLagu p = L.first;
+    while (p != nullptr) {
+        if (p->info.genre == genre) return p;
+        p = p->next;
+    }
+    return nullptr;
+}
+void sortLibraryById(ListLagu &L) {
+    if (L.first == nullptr || L.first == L.last) return;
+    bool swapped;
+    do {
+        swapped = false;
+        adrLagu p = L.first;
+        while (p != nullptr && p->next != nullptr) {
+            if (p->info.id > p->next->info.id) {
+                Lagu tmp = p->info;
+                p->info = p->next->info;
+                p->next->info = tmp;
+                swapped = true;
+            }
+            p = p->next;
+        }
+    } while (swapped);
+}
 adrLagu findLaguById(ListLagu L, int id) {
     adrLagu p = L.first;
     while (p != nullptr) {
@@ -63,6 +104,8 @@ void deleteLagu(ListLagu &L, int id) {
         }
         temp->next = nullptr;
         temp->prev = nullptr;
+        // Bebaskan memori node lagu yang dihapus
+        delete temp;
     }
 }
 void createPlaylist(Playlist &P) {
@@ -101,11 +144,20 @@ void removeFromPlaylist(Playlist &P, int id) {
             }
             temp->next = nullptr;
             temp->song = nullptr;
+            delete temp;
         } else {
             prev = curr;
             curr = curr->next;
         }
     }
+}
+bool isInPlaylist(Playlist P, int id) {
+    adrPlay p = P.first;
+    while (p != nullptr) {
+        if (p->song->info.id == id) return true;
+        p = p->next;
+    }
+    return false;
 }
 void showPlaylist(Playlist P) {
     adrPlay p = P.first;
@@ -133,6 +185,7 @@ adrLagu pop(Stack &S) {
         x = p->song;        
         p->next = nullptr;  
         p->song = nullptr; 
+        delete p;
     }
     return x;
 }
@@ -162,8 +215,28 @@ adrLagu dequeue(Queue &Q) {
         x = p->song;        
         p->next = nullptr;   
         p->song = nullptr;
+        delete p;
     }
     return x;
+}
+bool isInQueue(Queue Q, int id) {
+    adrQ p = Q.head;
+    while (p != nullptr) {
+        if (p->song->info.id == id) return true;
+        p = p->next;
+    }
+    return false;
+}
+void showQueue(Queue Q) {
+    adrQ p = Q.head;
+    int idx = 1;
+    while (p != nullptr) {
+        cout << idx << ". " << p->song->info.id << " - " << p->song->info.judul
+             << " (" << p->song->info.artis << ")\n";
+        p = p->next;
+        ++idx;
+    }
+    if (idx == 1) cout << "(Antrian kosong)\n";
 }
 void removeFromAllPlaylists(Playlist &P, int id) {
     adrPlay curr = P.first;
@@ -187,6 +260,7 @@ void removeFromAllPlaylists(Playlist &P, int id) {
             }
             temp->next = nullptr;
             temp->song = nullptr;
+            delete temp;
         } else {
             prev = curr;
             curr = curr->next;
@@ -197,9 +271,23 @@ void playSong(adrLagu song, Stack &S) {
     if (song == nullptr){
         cout << "Lagu masih kosong!" << endl;
     }else{
-        cout << "\nSedang memutar: " << song->info.judul 
-         << " - " << song->info.artis << "\n" << endl;
+        cout << "\n+====================================+\n";
+        cout << "|            Now Playing             |\n";
+        cout << "+====================================+\n";
+        cout << "|  Judul : " << song->info.judul << "\n";
+        cout << "|  Artis : " << song->info.artis << "\n";
+        cout << "|  Genre : " << song->info.genre << "\n";
+        cout << "|  Tahun : " << song->info.tahun << "\n";
+        cout << "+====================================+\n" << endl;
         push(S, song);
+    }
+}
+void stopSong(bool &isPlaying) {
+    if (isPlaying) {
+        cout << "\n== Stop Pemutaran ==\n";
+        isPlaying = false;
+    } else {
+        cout << "\nTidak ada lagu yang sedang diputar.\n";
     }
 }
 adrLagu nextSimilar(ListLagu L, adrLagu current) {
@@ -218,10 +306,13 @@ adrLagu nextSimilar(ListLagu L, adrLagu current) {
         }  
         p = p->next;
     }
-    if (current->next != nullptr) {
+    // Jika tidak ada lagu mirip, coba lagu berikutnya di library
+    if (current->next != nullptr && current->next != current) {
         return current->next;
     }
-    return L.first; 
+    // Jika hanya satu lagu di library atau tidak ada kandidat lain
+    // kembalikan nullptr agar caller bisa menampilkan pesan yang sesuai
+    return nullptr; 
 }
 adrLagu previousSong(Stack &S) {
     return pop(S);

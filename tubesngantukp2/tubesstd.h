@@ -1,11 +1,14 @@
 #ifndef TUBESSTD_H_INCLUDED
 #define TUBESSTD_H_INCLUDED
 #include <iostream>
+#include <string>
 using namespace std;
 typedef struct ElmLagu *adrLagu;
 typedef struct ElmPlay *adrPlay;
 typedef struct ElmStack *adrS;
 typedef struct ElmQueue *adrQ;
+// Mode pemutaran untuk mengelola history terpisah
+enum PlayerMode { MODE_LIBRARY = 1, MODE_PLAYLIST = 2, MODE_QUEUE = 3 };
 typedef struct Lagu {
     int id;
     string judul;
@@ -45,6 +48,8 @@ struct Queue {
     adrQ head;
     adrQ tail;
 };
+// Utility
+void sortLibraryById(ListLagu &L);
 // Library
 void createListLagu(ListLagu &L);
 adrLagu allocateLagu(Lagu x);
@@ -66,10 +71,17 @@ adrLagu pop(Stack &S);
 void createQueue(Queue &Q);
 void enqueue(Queue &Q, adrLagu x);
 adrLagu dequeue(Queue &Q);
+bool isInQueue(Queue Q, int id);
+void showQueue(Queue Q);
 // Player
 void playSong(adrLagu song, Stack &S);
 adrLagu nextSimilar(ListLagu L, adrLagu current);
 adrLagu previousSong(Stack &S);
+void stopSong(bool &isPlaying);
 // Helper
 void removeFromAllPlaylists(Playlist &P, int id);
+bool isInPlaylist(Playlist P, int id);
+adrLagu findLaguByTitle(ListLagu L, const string &judul);
+adrLagu findLaguByArtist(ListLagu L, const string &artis);
+adrLagu findLaguByGenre(ListLagu L, const string &genre);
 #endif // TUBESSTD_H_INCLUDED

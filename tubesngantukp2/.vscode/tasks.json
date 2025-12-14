@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build C++ (g++)",
+			"type": "shell",
+			"command": "g++ -std=c++11 -Wall -Wextra -o music_player main.cpp tubesstd.cpp",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		}
+	]
+}
